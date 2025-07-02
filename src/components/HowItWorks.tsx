@@ -29,7 +29,7 @@ const steps = [
 
 const HowItWorks = () => {
   return (
-    <section className="py-24 px-6">
+    <section id="how-it-works" className="py-24 px-6">
       <div className="max-w-6xl mx-auto">
         {/* Section Header */}
         <div className="text-center mb-20">
@@ -85,7 +85,13 @@ const HowItWorks = () => {
           <p className="text-lg text-muted-foreground mb-6">
             Ready to create your first AI masterpiece?
           </p>
-          <button className="btn-ai-primary">
+          <button 
+            className="btn-ai-primary"
+            onClick={() => {
+              const ctaSection = document.getElementById('cta');
+              ctaSection?.scrollIntoView({ behavior: 'smooth' });
+            }}
+          >
             Try It Free Now
           </button>
         </div>

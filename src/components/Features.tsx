@@ -45,7 +45,7 @@ const features = [
 
 const Features = () => {
   return (
-    <section className="py-24 px-6 bg-gradient-to-br from-background to-muted/30">
+    <section id="features" className="py-24 px-6 bg-gradient-to-br from-background to-muted/30">
       <div className="max-w-6xl mx-auto">
         {/* Section Header */}
         <div className="text-center mb-20">
@@ -116,7 +116,12 @@ const Features = () => {
                 </div>
               </div>
               
-              <button className="btn-ai-secondary">
+              <button 
+                className="btn-ai-secondary"
+                onClick={() => {
+                  alert('💎 Pro features coming soon! Connect to Supabase to unlock premium styles, HD downloads, and advanced AI models.');
+                }}
+              >
                 Upgrade to Pro
               </button>
             </div>

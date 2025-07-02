@@ -43,12 +43,24 @@ const Hero = () => {
         
         {/* CTA Buttons */}
         <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-16">
-          <Button className="btn-ai-primary group">
+          <Button 
+            className="btn-ai-primary group"
+            onClick={() => {
+              const createSection = document.getElementById('how-it-works');
+              createSection?.scrollIntoView({ behavior: 'smooth' });
+            }}
+          >
             Start Creating Now
             <ArrowRight className="ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" />
           </Button>
           
-          <Button className="btn-ai-outline group">
+          <Button 
+            className="btn-ai-outline group"
+            onClick={() => {
+              const featuresSection = document.getElementById('features');
+              featuresSection?.scrollIntoView({ behavior: 'smooth' });
+            }}
+          >
             <Zap className="mr-2 w-5 h-5" />
             Explore Gallery
           </Button>
