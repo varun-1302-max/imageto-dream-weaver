@@ -26,7 +26,8 @@ const CTA = () => {
             <Button 
               className="btn-ai-primary group text-xl px-12 py-6"
               onClick={() => {
-                alert('🎨 AI Image Creator coming soon! Connect to Supabase to enable full functionality including image generation, user accounts, and more.');
+                const generator = document.getElementById('image-generator');
+                generator?.scrollIntoView({ behavior: 'smooth' });
               }}
             >
               <Zap className="mr-3 w-6 h-6" />
@@ -81,7 +82,8 @@ const CTA = () => {
           <div 
             className="card-ai group cursor-pointer relative overflow-hidden"
             onClick={() => {
-              alert('💎 Pro features coming soon! Connect to Supabase to unlock premium styles, HD downloads, and advanced AI models.');
+              const historySection = document.getElementById('image-history');
+              historySection?.scrollIntoView({ behavior: 'smooth' });
             }}
           >
             <div className="absolute top-2 right-2">
@@ -91,10 +93,10 @@ const CTA = () => {
               <Crown className="w-8 h-8 text-accent-foreground" />
             </div>
             <h3 className="text-lg font-bold text-foreground mb-2 group-hover:text-gradient transition-colors duration-300">
-              Upgrade to Pro
+              View Your History
             </h3>
             <p className="text-muted-foreground text-sm">
-              Unlock premium styles and HD downloads
+              Browse all your generated images
             </p>
           </div>
         </div>
