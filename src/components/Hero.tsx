@@ -46,7 +46,7 @@ const Hero = () => {
           <Button 
             className="btn-ai-primary group"
             onClick={() => {
-              const createSection = document.getElementById('how-it-works');
+              const createSection = document.getElementById('image-generator');
               createSection?.scrollIntoView({ behavior: 'smooth' });
             }}
           >

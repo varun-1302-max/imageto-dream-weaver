@@ -1,5 +1,6 @@
 import Hero from "@/components/Hero";
 import HowItWorks from "@/components/HowItWorks";
+import ImageGenerator from "@/components/ImageGenerator";
 import Features from "@/components/Features";
 import UseCases from "@/components/UseCases";
 import CTA from "@/components/CTA";
@@ -10,6 +11,7 @@ const Index = () => {
     <div className="min-h-screen bg-gradient-background">
       <Hero />
       <HowItWorks />
+      <ImageGenerator />
       <Features />
       <UseCases />
       <CTA />
