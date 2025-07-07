@@ -21,9 +21,28 @@ const ImageGenerator = () => {
     "A cosmic whale swimming through nebula clouds in space"
   ];
 
+  const validateInput = (input: string): { valid: boolean; error?: string } => {
+    const trimmed = input.trim();
+    
+    if (!trimmed) {
+      return { valid: false, error: "Please enter a prompt" };
+    }
+    
+    if (trimmed.length < 3) {
+      return { valid: false, error: "Prompt must be at least 3 characters long" };
+    }
+    
+    if (trimmed.length > 1000) {
+      return { valid: false, error: "Prompt must be less than 1000 characters" };
+    }
+    
+    return { valid: true };
+  };
+
   const generateImage = async () => {
-    if (!prompt.trim()) {
-      toast.error("Please enter a prompt");
+    const validation = validateInput(prompt);
+    if (!validation.valid) {
+      toast.error(validation.error);
       return;
     }
 
@@ -34,19 +53,40 @@ const ImageGenerator = () => {
       });
 
       if (error) {
+        // Handle different types of errors
+        if (error.message?.includes('401') || error.message?.includes('Authentication')) {
+          toast.error("Please sign in to generate images");
+        } else if (error.message?.includes('429') || error.message?.includes('rate limit')) {
+          toast.error("Too many requests. Please wait before trying again.");
+        } else {
+          toast.error("Service temporarily unavailable. Please try again later.");
+        }
         throw error;
       }
 
-      if (data.error) {
+      if (data?.error) {
+        // Handle API-returned errors with user-friendly messages
+        const errorMessage = data.error;
+        if (errorMessage.includes('inappropriate') || errorMessage.includes('content')) {
+          toast.error("Please try a different prompt that's appropriate for image generation");
+        } else if (errorMessage.includes('rate limit')) {
+          toast.error("You've reached your generation limit. Please try again later.");
+        } else {
+          toast.error(errorMessage);
+        }
         throw new Error(data.error);
       }
 
+      if (!data?.imageUrl) {
+        throw new Error("No image was generated");
+      }
+
       setGeneratedImage(data.imageUrl);
-      setCurrentPrompt(prompt);
+      setCurrentPrompt(prompt.trim());
       toast.success("Image generated successfully!");
     } catch (error) {
       console.error('Error generating image:', error);
-      toast.error(error.message || "Failed to generate image. Please try again.");
+      // Error already handled above, just log for debugging
     } finally {
       setIsGenerating(false);
     }
@@ -96,14 +136,26 @@ const ImageGenerator = () => {
               <Label htmlFor="prompt" className="text-lg font-semibold mb-4 block">
                 Describe your image
               </Label>
-              <Input
-                id="prompt"
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                placeholder="A monkey in Kashi, speaking Telugu in a low poly 3D style"
-                className="h-12 text-lg"
-                onKeyPress={(e) => e.key === 'Enter' && !isGenerating && generateImage()}
-              />
+                <Input
+                  id="prompt"
+                  value={prompt}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    // Prevent extremely long inputs
+                    if (value.length <= 1000) {
+                      setPrompt(value);
+                    }
+                  }}
+                  placeholder="A monkey in Kashi, speaking Telugu in a low poly 3D style"
+                  className="h-12 text-lg"
+                  onKeyPress={(e) => e.key === 'Enter' && !isGenerating && generateImage()}
+                  maxLength={1000}
+                />
+                {prompt.length > 900 && (
+                  <p className="text-sm text-amber-500 mt-1">
+                    {1000 - prompt.length} characters remaining
+                  </p>
+                )}
             </div>
 
             <Button
