@@ -14,7 +14,9 @@ serve(async (req) => {
   }
 
   try {
+    console.log('=== Generate Image Function Started ===');
     const { prompt, size = "1024x1024" } = await req.json();
+    console.log('Request payload:', { prompt, size });
     
     if (!prompt) {
       return new Response(
@@ -28,7 +30,9 @@ serve(async (req) => {
 
     // Get user from auth header
     const authHeader = req.headers.get('Authorization');
+    console.log('Auth header present:', !!authHeader);
     if (!authHeader) {
+      console.error('No authorization header provided');
       return new Response(
         JSON.stringify({ error: "Authentication required" }), 
         { 
@@ -39,8 +43,24 @@ serve(async (req) => {
     }
 
     // Initialize Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY');
+    console.log('Environment variables check:', {
+      supabaseUrl: !!supabaseUrl,
+      supabaseKey: !!supabaseKey,
+      openAIKey: !!Deno.env.get('OPENAI_API_KEY')
+    });
+    
+    if (!supabaseUrl || !supabaseKey) {
+      console.error('Missing Supabase environment variables');
+      return new Response(
+        JSON.stringify({ error: "Server configuration error" }), 
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
     const supabase = createClient(supabaseUrl, supabaseKey, {
       global: { headers: { Authorization: authHeader } }
     });
