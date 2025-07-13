@@ -139,7 +139,8 @@ serve(async (req) => {
     console.log('Environment variables check:', {
       supabaseUrl: !!supabaseUrl,
       supabaseKey: !!supabaseKey,
-      openAIKey: !!Deno.env.get('OPENAI_API_KEY')
+      openAIKey: !!Deno.env.get('OPENAI_API_KEY'),
+      allEnvKeys: Object.keys(Deno.env.toObject())
     });
     
     if (!supabaseUrl || !supabaseKey) {
