@@ -238,12 +238,12 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-image-1',
+        model: 'dall-e-3',
         prompt: prompt,
         n: 1,
         size: size,
-        quality: 'high',
-        response_format: 'b64_json'
+        quality: 'hd',
+        response_format: 'url'
       }),
     });
 
@@ -264,11 +264,11 @@ serve(async (req) => {
     }
 
     const data = await response.json();
-    const imageData = data.data[0].b64_json;
-    const imageUrl = `data:image/png;base64,${imageData}`;
+    const imageUrl = data.data[0].url;
 
-    // Convert base64 to blob for storage
-    const imageBlob = Uint8Array.from(atob(imageData), c => c.charCodeAt(0));
+    // Download the image from OpenAI URL for storage
+    const imageResponse = await fetch(imageUrl);
+    const imageBlob = new Uint8Array(await imageResponse.arrayBuffer());
     
     // Generate unique filename
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
@@ -282,7 +282,7 @@ serve(async (req) => {
         cacheControl: '3600'
       });
 
-    let storedImageUrl = imageUrl; // Fallback to base64
+    let storedImageUrl = imageUrl; // Fallback to OpenAI URL
     if (!uploadError && uploadData) {
       // Get public URL
       const { data: urlData } = supabase.storage
@@ -293,7 +293,7 @@ serve(async (req) => {
         storedImageUrl = urlData.publicUrl;
       }
     } else {
-      console.warn('Failed to upload to storage:', uploadError);
+      console.warn('Failed to upload to storage, using OpenAI URL:', uploadError);
     }
 
     // Save to database
