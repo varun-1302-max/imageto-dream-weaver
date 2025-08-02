@@ -24,9 +24,10 @@ const Auth = () => {
 
     setIsLoading(true);
     try {
+      console.log('Attempting sign up with:', email);
       const redirectUrl = `${window.location.origin}/`;
       
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -34,17 +35,37 @@ const Auth = () => {
         }
       });
 
+      console.log('Sign up response:', { data, error });
+
       if (error) {
+        console.error('Sign up error:', error);
         if (error.message.includes("already registered")) {
           toast.error("This email is already registered. Please try signing in instead.");
+        } else if (error.message.includes("Invalid email")) {
+          toast.error("Please enter a valid email address.");
+        } else if (error.message.includes("Password")) {
+          toast.error("Password must be at least 6 characters long.");
+        } else if (error.message.includes("Failed to fetch")) {
+          toast.error("Network error. Please check your connection and try again.");
         } else {
-          toast.error(error.message);
+          toast.error(`Sign up failed: ${error.message}`);
         }
       } else {
-        toast.success("Check your email for the confirmation link!");
+        if (data.user && !data.user.email_confirmed_at) {
+          toast.success("Check your email for the confirmation link!");
+        } else if (data.user && data.user.email_confirmed_at) {
+          toast.success("Account created successfully! You're now logged in.");
+        } else {
+          toast.success("Account created! Please check your email for confirmation.");
+        }
       }
-    } catch (error) {
-      toast.error("An unexpected error occurred");
+    } catch (error: any) {
+      console.error('Sign up catch error:', error);
+      if (error.message?.includes("Failed to fetch")) {
+        toast.error("Network error. Please check your connection and try again.");
+      } else {
+        toast.error("An unexpected error occurred. Please try again.");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -59,22 +80,36 @@ const Auth = () => {
 
     setIsLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      console.log('Attempting sign in with:', email);
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
+      console.log('Sign in response:', { data, error });
+
       if (error) {
+        console.error('Sign in error:', error);
         if (error.message.includes("Invalid login credentials")) {
           toast.error("Invalid email or password. Please check your credentials and try again.");
+        } else if (error.message.includes("Email not confirmed")) {
+          toast.error("Please check your email and click the confirmation link before signing in.");
+        } else if (error.message.includes("Failed to fetch")) {
+          toast.error("Network error. Please check your connection and try again.");
         } else {
-          toast.error(error.message);
+          toast.error(`Sign in failed: ${error.message}`);
         }
       } else {
+        console.log('Sign in successful:', data.user?.email);
         toast.success("Welcome back!");
       }
-    } catch (error) {
-      toast.error("An unexpected error occurred");
+    } catch (error: any) {
+      console.error('Sign in catch error:', error);
+      if (error.message?.includes("Failed to fetch")) {
+        toast.error("Network error. Please check your connection and try again.");
+      } else {
+        toast.error("An unexpected error occurred. Please try again.");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -83,18 +118,31 @@ const Auth = () => {
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
+      console.log('Attempting Google sign in');
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/`
         }
       });
 
+      console.log('Google sign in response:', { data, error });
+
       if (error) {
-        toast.error(error.message);
+        console.error('Google sign in error:', error);
+        if (error.message.includes("Failed to fetch")) {
+          toast.error("Network error. Please check your connection and try again.");
+        } else {
+          toast.error(`Google sign-in failed: ${error.message}`);
+        }
       }
-    } catch (error) {
-      toast.error("Google sign-in failed");
+    } catch (error: any) {
+      console.error('Google sign in catch error:', error);
+      if (error.message?.includes("Failed to fetch")) {
+        toast.error("Network error. Please check your connection and try again.");
+      } else {
+        toast.error("Google sign-in failed. Please try again.");
+      }
     } finally {
       setIsLoading(false);
     }

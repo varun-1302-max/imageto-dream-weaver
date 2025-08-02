@@ -48,45 +48,68 @@ const ImageGenerator = () => {
 
     setIsGenerating(true);
     try {
+      console.log('Generating image with prompt:', prompt.trim());
+      
       const { data, error } = await supabase.functions.invoke('generate-image', {
         body: { prompt: prompt.trim() }
       });
 
+      console.log('Image generation response:', { data, error });
+
       if (error) {
+        console.error('Image generation error:', error);
         // Handle different types of errors
         if (error.message?.includes('401') || error.message?.includes('Authentication')) {
           toast.error("Please sign in to generate images");
         } else if (error.message?.includes('429') || error.message?.includes('rate limit')) {
           toast.error("Too many requests. Please wait before trying again.");
+        } else if (error.message?.includes('Failed to fetch')) {
+          toast.error("Network error. Please check your connection and try again.");
         } else {
-          toast.error("Service temporarily unavailable. Please try again later.");
+          toast.error(`Service error: ${error.message}`);
         }
         throw error;
       }
 
       if (data?.error) {
+        console.error('API returned error:', data.error);
         // Handle API-returned errors with user-friendly messages
         const errorMessage = data.error;
         if (errorMessage.includes('inappropriate') || errorMessage.includes('content')) {
           toast.error("Please try a different prompt that's appropriate for image generation");
         } else if (errorMessage.includes('rate limit')) {
           toast.error("You've reached your generation limit. Please try again later.");
+        } else if (errorMessage.includes('OpenAI')) {
+          toast.error("AI service temporarily unavailable. Please try again later.");
         } else {
-          toast.error(errorMessage);
+          toast.error(`Generation failed: ${errorMessage}`);
         }
         throw new Error(data.error);
       }
 
       if (!data?.imageUrl) {
+        console.error('No image URL returned:', data);
+        toast.error("Image generation failed - no image was returned");
         throw new Error("No image was generated");
       }
 
+      console.log('Image generated successfully:', data.imageUrl);
       setGeneratedImage(data.imageUrl);
       setCurrentPrompt(prompt.trim());
       toast.success("Image generated successfully!");
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error generating image:', error);
-      // Error already handled above, just log for debugging
+      
+      // Only show additional error if one wasn't already shown above
+      if (!error.message?.includes('rate limit') && 
+          !error.message?.includes('inappropriate') && 
+          !error.message?.includes('Authentication')) {
+        if (error.message?.includes('Failed to fetch')) {
+          toast.error("Network error. Please check your connection and try again.");
+        } else if (!toast) {
+          toast.error("Image generation failed. Please try again.");
+        }
+      }
     } finally {
       setIsGenerating(false);
     }
