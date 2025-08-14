@@ -119,20 +119,6 @@ serve(async (req) => {
       );
     }
 
-    // Get user from auth header
-    const authHeader = req.headers.get('Authorization');
-    console.log('Auth header present:', !!authHeader);
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      console.error('Invalid or missing authorization header');
-      return new Response(
-        JSON.stringify({ error: "Valid authentication required" }), 
-        { 
-          status: 401, 
-          headers: { ...securityHeaders, 'Content-Type': 'application/json' } 
-        }
-      );
-    }
-
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY');
@@ -153,27 +139,16 @@ serve(async (req) => {
         }
       );
     }
-    const supabase = createClient(supabaseUrl, supabaseKey, {
-      global: { headers: { Authorization: authHeader } }
-    });
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Get current user
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError || !user) {
-      console.error('User authentication failed:', userError?.message);
-      return new Response(
-        JSON.stringify({ error: "Authentication failed" }), 
-        { 
-          status: 401, 
-          headers: { ...securityHeaders, 'Content-Type': 'application/json' } 
-        }
-      );
-    }
+    // Generate anonymous user ID for rate limiting
+    const userIP = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'anonymous';
+    const anonymousUserId = `anon_${userIP}`;
     
     // Check rate limiting
-    const rateLimitCheck = checkRateLimit(user.id);
+    const rateLimitCheck = checkRateLimit(anonymousUserId);
     if (!rateLimitCheck.allowed) {
-      console.warn(`Rate limit exceeded for user ${user.id}`);
+      console.warn(`Rate limit exceeded for IP ${userIP}`);
       return new Response(
         JSON.stringify({ error: rateLimitCheck.error }), 
         { 
@@ -273,7 +248,7 @@ serve(async (req) => {
     
     // Generate unique filename
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const filename = `${user.id}/${timestamp}-${crypto.randomUUID()}.png`;
+    const filename = `public/${timestamp}-${crypto.randomUUID()}.png`;
 
     // Upload to Supabase Storage
     const { data: uploadData, error: uploadError } = await supabase.storage
@@ -297,22 +272,8 @@ serve(async (req) => {
       console.warn('Failed to upload to storage, using OpenAI URL:', uploadError);
     }
 
-    // Save to database
-    const { error: dbError } = await supabase
-      .from('image_generations')
-      .insert({
-        user_id: user.id,
-        prompt: prompt,
-        image_url: storedImageUrl,
-        image_path: uploadData?.path || null
-      });
-
-    if (dbError) {
-      console.warn('Failed to save to database:', dbError);
-    }
-
     const processingTime = Date.now() - startTime;
-    console.log('Image generated and saved successfully', { processingTime, userId: user.id });
+    console.log('Image generated and saved successfully', { processingTime, anonymousUserId });
 
     return new Response(
       JSON.stringify({ 
